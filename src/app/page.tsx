@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Globe } from "lucide-react";
+import XmbWave from "@/components/XmbWave";
 
 const ID = "968673369077727262";
 const NAME = "veneito";
@@ -133,7 +134,8 @@ export default function Home() {
   const topPlays = stats?.artists[0]?.plays || 1;
 
   return (
-    <main className="min-h-screen bg-black text-white px-5 py-16 sm:py-24">
+    <main className="relative min-h-screen text-white px-5 py-16 sm:py-24">
+      <XmbWave />
       <div className="mx-auto w-full max-w-2xl flex flex-col gap-4 animate-[rise_.6s_ease-out]">
         {/* Header */}
         <header className="flex flex-col items-center text-center gap-5 mb-6">
