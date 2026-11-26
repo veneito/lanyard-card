@@ -26,8 +26,10 @@ const unbounded = Unbounded({
 export const metadata: Metadata = {
   title: "veneito",
   description: "veneito: Rust apps, homelab, Roblox dev",
-  openGraph: { title: "veneito", description: "Rust apps, homelab, Roblox dev" },
+  openGraph: { title: "veneito", description: "Rust apps, homelab, Roblox dev", url: "https://card.veneito.dev" },
 };
+
+export const viewport = { themeColor: "#000000" };
 
 export default function RootLayout({
   children,

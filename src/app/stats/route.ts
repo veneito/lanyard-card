@@ -16,12 +16,15 @@ async function get<T>(path: string): Promise<T | null> {
 }
 
 export async function GET() {
-  const [total, month, artists, tracks, recent] = await Promise.all([
+  const d = new Date(Date.now() - 29 * 86400000);
+  const since = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+  const [total, month, artists, tracks, recent, pulse] = await Promise.all([
     get<{ amount: number }>("numscrobbles?in=alltime"),
     get<{ amount: number }>("numscrobbles?in=thismonth"),
     get<{ list: { artist: string; scrobbles: number }[] }>("charts/artists?in=thismonth"),
     get<{ list: { track: Track; scrobbles: number }[] }>("charts/tracks?in=thismonth"),
     get<{ list: { time: number; track: Track }[] }>("scrobbles?perpage=6"),
+    get<{ list: { range: { description: string }; scrobbles: number }[] }>(`pulse?step=day&since=${since}`),
   ]);
 
   return Response.json({
@@ -38,5 +41,6 @@ export async function GET() {
       artist: s.track.artists.join(", "),
       time: s.time,
     })),
+    days: (pulse?.list ?? []).map((p) => ({ day: p.range.description, plays: p.scrobbles })),
   });
 }

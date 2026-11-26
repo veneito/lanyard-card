@@ -38,7 +38,17 @@ type Stats = {
   artists: { name: string; plays: number }[];
   tracks: { title: string; artist: string; plays: number }[];
   recent: { title: string; artist: string; time: number }[];
+  days: { day: string; plays: number }[];
 };
+
+const PROJECTS: [string, string, string, string][] = [
+  ["Sonora", "Native music streaming client", "Rust · GPUI", "https://github.com/veneito/sonora"],
+  ["Homelab", "Two-node Proxmox lab, Tailscale, AD", "Infra", "https://github.com/veneito/homelab"],
+  ["EmuHub", "Low-memory emulation hub", "Rust · GPUI", "https://github.com/veneito/EmuHub"],
+  ["party-night", "Party games on your TV, phones as controllers", "Rust", "https://github.com/veneito/party-night"],
+  ["engage-pc-recomp", "Native Windows port of Fire Emblem Engage", "GitLab", "https://gitlab.com/engage-pc-recomp/engage-pc-recomp"],
+  ["pocket-mc", "Host Minecraft servers on Windows", "C#", "https://github.com/veneito/pocket-mc-windows"],
+];
 
 const STATUS: Record<string, string> = { online: "#23a55a", idle: "#f0b232", dnd: "#f23f43", offline: "#80848e" };
 
@@ -166,7 +176,16 @@ export default function Home() {
         </header>
 
         {/* Now playing */}
-        <Panel>
+        <Panel className="relative overflow-hidden">
+          {act && art(act) && (
+            <img
+              src={art(act)!}
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute -inset-10 w-[calc(100%+5rem)] h-[calc(100%+5rem)] object-cover blur-3xl opacity-25 saturate-150"
+            />
+          )}
+          <div className="relative">
           <Label>{act ? `${verb} ${act.name}` : "Now"}</Label>
           {act ? (
             <div className="flex items-center gap-4">
@@ -188,6 +207,7 @@ export default function Home() {
           ) : (
             <p className="text-white/45">building something</p>
           )}
+          </div>
         </Panel>
 
         {/* Numbers */}
@@ -203,6 +223,31 @@ export default function Home() {
             </Panel>
           ))}
         </div>
+
+        {/* Last 30 days */}
+        {stats && stats.days.length > 0 && (
+          <Panel>
+            <div className="flex items-baseline justify-between">
+              <Label>Listening · last 30 days</Label>
+              <span className="text-[11px] font-mono text-white/35 -mt-3">
+                {fmt(stats.days.reduce((n, d) => n + d.plays, 0))} plays
+              </span>
+            </div>
+            <div className="flex items-end gap-[3px] h-24">
+              {stats.days.map((d) => (
+                <div key={d.day} className="group relative flex-1 h-full flex items-end">
+                  <div
+                    className="w-full rounded-sm bg-white/25 group-hover:bg-white transition-colors"
+                    style={{ height: `${Math.max(3, (d.plays / Math.max(...stats.days.map((x) => x.plays), 1)) * 100)}%` }}
+                  />
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-md bg-white px-2 py-1 text-[11px] text-black opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    {d.day} · {d.plays}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
 
         {/* Charts */}
         <div className="grid sm:grid-cols-2 gap-4">
@@ -251,6 +296,28 @@ export default function Home() {
               </li>
             ))}
           </ul>
+        </Panel>
+
+        {/* Projects */}
+        <Panel>
+          <Label>Projects</Label>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {PROJECTS.map(([name, desc, tag, href]) => (
+              <a
+                key={name}
+                href={href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="group rounded-xl border border-white/[0.06] px-4 py-3 hover:bg-white/[0.04] hover:border-white/15 transition"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium truncate">{name}</span>
+                  <span className="text-[10px] uppercase tracking-widest text-white/35 shrink-0">{tag}</span>
+                </div>
+                <p className="text-xs text-white/45 mt-0.5 truncate">{desc}</p>
+              </a>
+            ))}
+          </div>
         </Panel>
 
         <footer className="text-center text-[11px] text-white/25 mt-4">
