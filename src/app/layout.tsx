@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { CSideScript } from "@c-side/next";
-import { Open_Sans } from "next/font/google";
-import { Roboto_Mono } from "next/font/google";
-import Head from "next/head";
+import { Open_Sans, Roboto_Mono, Unbounded } from "next/font/google";
 
 const openSans = Open_Sans({
   weight: ["400", "500", "600", "700"],
@@ -19,13 +16,17 @@ const robotoMono = Roboto_Mono({
   variable: "--font-roboto-mono",
 });
 
+const unbounded = Unbounded({
+  weight: ["500"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-unbounded",
+});
+
 export const metadata: Metadata = {
-  title: "Lanyard for GitHub Profile",
-  description: "Display your Discord Presence anywhere, using Lanyard",
-  openGraph: {
-    title: "Lanyard for GitHub Profile",
-    description: "Display your Discord Presence anywhere, using Lanyard",
-  },
+  title: "veneito",
+  description: "veneito: Rust apps, homelab, Roblox dev",
+  openGraph: { title: "veneito", description: "Rust apps, homelab, Roblox dev" },
 };
 
 export default function RootLayout({
@@ -35,13 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <Head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <CSideScript />
-      </Head>
-      <body
-        className={`${openSans.variable} ${robotoMono.variable} antialiased`}
-      >
+      <body className={`${openSans.variable} ${robotoMono.variable} ${unbounded.variable} antialiased bg-black`}>
         {children}
       </body>
     </html>

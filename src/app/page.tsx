@@ -1,350 +1,154 @@
 "use client";
 
-import React, { useState, JSX } from "react";
-import { motion } from "motion/react";
-import { isSnowflake } from "@/utils/snowflake";
-import { IParameterInfo, PARAMETER_INFO } from "@/utils/parameters";
-import * as Icon from "lucide-react";
-import { InfoTooltip } from "@/components/Popover";
-import { cn, filterLetters } from "@/utils/helpers";
+import { useEffect, useState } from "react";
 
-export default function Home() {
-  const ORIGIN_URL =
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:3000"
-      : "https://lanyard.cnrad.dev";
+const ID = "968673369077727262";
+const NAME = "veneito";
 
-  const [userId, setUserId] = useState("");
-  const [userError, setUserError] = useState<string | JSX.Element>();
+const LINKS: [string, string, string][] = [
+  ["GitHub", "https://github.com/veneito", "github"],
+  ["Website", "https://www.veneito.dev", "googlechrome"],
+  ["Discord", "https://discord.com/invite/wZph7vyTRH", "discord"],
+  ["Steam", "https://steamcommunity.com/id/veneito", "steam"],
+  ["Twitch", "https://twitch.tv/veneitoo", "twitch"],
+  ["TikTok", "https://tiktok.com/@veneitooo", "tiktok"],
+  ["Instagram", "https://instagram.com/veneitooo", "instagram"],
+  ["Roblox", "https://roblox.com/users/143054393/profile", "roblox"],
+  ["NameMC", "https://namemc.com/profile/veneito.1", "namemc"],
+];
 
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [options, setOptions] = useState<Record<string, string | boolean>>({});
+type Activity = {
+  type: number;
+  name: string;
+  details?: string;
+  state?: string;
+  application_id?: string;
+  timestamps?: { start?: number; end?: number };
+  assets?: { large_image?: string };
+};
+type Presence = {
+  discord_status: string;
+  discord_user: { id: string; avatar: string | null };
+  activities: Activity[];
+};
 
-  async function onLoadDiscordId(userId: string) {
-    setUserId(userId);
-    setIsLoaded(false);
-    setUserError(undefined);
+const STATUS: Record<string, string> = { online: "#23a55a", idle: "#f0b232", dnd: "#f23f43", offline: "#80848e" };
 
-    if (userId.length < 1) return;
-    if (userId.length > 0 && !isSnowflake(userId))
-      return setUserError("Invalid Discord ID");
-  }
-
-  const url = `${ORIGIN_URL}/api/${userId}${
-    Object.keys(options).length > 0
-      ? `?${Object.keys(options)
-          .map((option) => `${option}=${options[option]}`)
-          .join("&")}`
-      : ""
-  }`;
-
-  return (
-    <>
-      <main className="flex min-h-screen max-w-[100vw] flex-col items-center max-sm:px-4">
-        <div className="relative mt-16 flex w-auto flex-row gap-8">
-          <MainSection url={url} userId={userId} className="max-lg:hidden" />
-
-          <div className="w-full sm:max-w-[30rem]">
-            <p className="text-left text-3xl font-semibold text-[#cecece] mb-2">
-              🏷️ lanyard-profile-readme{" "}
-            </p>
-
-            <p className="mb-2 text-sm text-[#aaabaf]">
-              Uses{" "}
-              <a
-                href="https://github.com/Phineas/lanyard"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="text-white underline decoration-transparent underline-offset-2 transition-colors duration-150 ease-out hover:decoration-white"
-              >
-                Lanyard
-              </a>{" "}
-              to display your Discord Presence anywhere.
-            </p>
-
-            <div className="flex h-[2.25rem] w-full flex-row gap-2">
-              <input
-                className="w-full rounded-lg border border-white/10 bg-transparent px-2.5 py-1.5 font-mono text-sm text-gray-200 transition-colors duration-150 ease-out focus:border-white/50 focus:outline-none"
-                onChange={(e) => onLoadDiscordId(e.target.value)}
-                value={userId || ""}
-                placeholder="Enter your Discord ID"
-              />
-            </div>
-
-            {!isLoaded ? (
-              <motion.p
-                variants={{
-                  open: { opacity: 1, display: "block" },
-                  closed: { opacity: 0, display: "none" },
-                }}
-                initial="closed"
-                animate={userError ? "open" : "closed"}
-                className="mt-1 text-sm text-red-500"
-                transition={{ duration: 0.15 }}
-              >
-                {userError}
-              </motion.p>
-            ) : null}
-
-            <MainSection
-              url={url}
-              userId={userId}
-              className="block lg:hidden"
-            />
-
-            <div
-              className={cn(
-                "flex flex-col text-white mt-4 p-3 border border-zinc-800 bg-zinc-900/50 rounded-lg mb-4"
-              )}
-            >
-              <div className="grid-rows-auto mb-4 flex w-full flex-col gap-2.5 sm:grid sm:grid-cols-2">
-                {PARAMETER_INFO.filter((item) => item.type !== "boolean").map(
-                  (item) => {
-                    return (
-                      <div
-                        key={item.parameter}
-                        className="flex flex-col gap-1.5"
-                      >
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm text-gray-300">{item.title}</p>
-                          <InfoTooltip
-                            content={item.description || "Unknown"}
-                          />
-                        </div>
-
-                        {item.type === "string" && (
-                          <input
-                            className="relative h-8 w-full appearance-none rounded-md border border-white/10 bg-transparent px-2 py-0.5 text-sm outline-none transition-all duration-150 ease-out placeholder:text-white/30 focus:border-white/50 disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder={item.options?.placeholder || "..."}
-                            onChange={(e) => {
-                              if (e.target.value.length < 1) {
-                                const prevOptions = { ...options };
-                                delete prevOptions[item.parameter];
-                                return setOptions(prevOptions);
-                              }
-
-                              const filteredValue = encodeURIComponent(
-                                filterLetters(
-                                  e.target.value,
-                                  (
-                                    PARAMETER_INFO.find(
-                                      (p) => p.parameter === item.parameter
-                                    ) as { options: { omit: string[] } }
-                                  ).options.omit
-                                )
-                              );
-
-                              setOptions((prev) => ({
-                                ...prev,
-                                [item.parameter]: filteredValue,
-                              }));
-                            }}
-                            value={decodeURIComponent(
-                              (options[item.parameter] as string) || ""
-                            )}
-                          />
-                        )}
-
-                        {item.type === "list" && (
-                          <div className="relative">
-                            <select
-                              value={(options[item.parameter] as string) || ""}
-                              onChange={(e) => {
-                                if (e.target.value.length < 1) {
-                                  const prevOptions = { ...options };
-                                  delete prevOptions[item.parameter];
-                                  return setOptions(prevOptions);
-                                }
-
-                                setOptions((prev) => ({
-                                  ...prev,
-                                  [item.parameter]: e.target.value,
-                                }));
-                              }}
-                              className={cn(
-                                "relative h-8 w-full appearance-none rounded-md border border-white/10 bg-transparent px-2 py-0.5 text-sm outline-none transition-all duration-150 ease-out placeholder:text-white/30 focus:border-white/50 disabled:cursor-not-allowed disabled:opacity-50",
-                                {
-                                  "text-white/30":
-                                    !options[item.parameter] ||
-                                    options[item.parameter] === "",
-                                }
-                              )}
-                            >
-                              <option value="" className="bg-background">
-                                None
-                              </option>
-                              {item.options.list.map((option) => (
-                                <option
-                                  value={option.value}
-                                  key={option.value}
-                                  className="bg-background"
-                                >
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
-                            <Icon.ChevronDown
-                              size={14}
-                              className="absolute right-2 top-0 my-auto flex h-full text-white/50"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-
-              {/* Separated for easier styling/readability */}
-              <div className="sm:grid-rows-auto flex flex-col gap-2 sm:grid sm:grid-cols-2">
-                {(
-                  PARAMETER_INFO.filter(
-                    (item) => item.type === "boolean"
-                  ) as Extract<IParameterInfo[number], { type: "boolean" }>[]
-                ).map((item) => {
-                  return (
-                    <div
-                      key={item.parameter}
-                      className="flex flex-row items-start gap-2.5 text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        className={cn(
-                          "mt-0.5 max-h-4 min-h-4 min-w-4 max-w-4 cursor-pointer appearance-none before:overflow-clip before:rounded-[0.25rem] after:absolute after:h-4 after:w-4 after:rounded-[0.25rem] after:border after:border-white/10 after:transition-all after:duration-150 after:ease-out",
-                          {
-                            "after:border-gray-200/50 after:bg-gray-500/40":
-                              options[item.parameter] === !item.invertBoolean,
-                            "after:bg-zinc-700/10 after:hover:bg-zinc-700/25":
-                              options[item.parameter] !== !item.invertBoolean,
-                          }
-                        )}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setOptions((prev) => ({
-                              ...prev,
-                              [item.parameter]: item.invertBoolean
-                                ? !e.target.checked
-                                : e.target.checked,
-                            }));
-                          } else {
-                            const prevOptions = { ...options };
-                            delete prevOptions[item.parameter];
-                            setOptions(prevOptions);
-                          }
-                        }}
-                      />
-
-                      <p
-                        className="text-gray-300"
-                        style={{
-                          textDecoration: PARAMETER_INFO.find(
-                            (p) => p.parameter === item.parameter
-                          )?.deprecated
-                            ? "line-through"
-                            : "none",
-                        }}
-                      >
-                        {item.title}
-                      </p>
-
-                      <InfoTooltip content={item.description || "Unknown"} />
-                    </div>
-                  );
-                })}
-              </div>
-
-              <a
-                href="https://github.com/cnrad/lanyard-profile-readme?tab=readme-ov-file#options"
-                rel="noreferrer noopener"
-                target="_blank"
-                className="flex flex-row items-center justify-center gap-2 mt-4 text-sm text-white/75 hover:text-white w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-full py-1.5 transition-colors duration-150 ease-out"
-              >
-                More info
-                <Icon.ExternalLink size={14} />
-              </a>
-            </div>
-          </div>
-        </div>
-      </main>
-    </>
-  );
+function art(a: Activity) {
+  const img = a.assets?.large_image;
+  if (!img) return null;
+  if (img.startsWith("mp:")) return `https://media.discordapp.net/${img.slice(3)}`;
+  return `https://cdn.discordapp.com/app-assets/${a.application_id}/${img}.png`;
 }
 
-const MainSection = ({
-  url,
-  userId,
-  className,
-}: {
-  url: string;
-  userId: string;
-  className: string;
-}) => {
-  const [copyState, setCopyState] = useState("Copy");
-  const [outputType, setOutputType] = useState<"markdown" | "html" | "url">(
-    "markdown"
-  );
+const clock = (ms: number) => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
 
-  const copyContent = {
-    markdown: `[![Discord Presence](${url})](https://discord.com/users/${userId})`,
-    html: `<a href="https://discord.com/users/${userId}"><img src="${url}" /></a>`,
-    url: `${url}`,
-  };
+export default function Home() {
+  const [p, setP] = useState<Presence | null>(null);
+  const [typed, setTyped] = useState(0);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const load = () =>
+      fetch(`https://api.lanyard.rest/v1/users/${ID}`)
+        .then((r) => r.json())
+        .then((j) => j.success && setP(j.data))
+        .catch(() => {});
+    load();
+    const poll = setInterval(load, 5000);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => (clearInterval(poll), clearInterval(tick));
+  }, []);
+
+  useEffect(() => {
+    if (typed >= NAME.length) return;
+    const t = setTimeout(() => setTyped(typed + 1), 160);
+    return () => clearTimeout(t);
+  }, [typed]);
+
+  const act = p?.activities.find((a) => a.type !== 4);
+  const avatar = p?.discord_user.avatar
+    ? `https://cdn.discordapp.com/avatars/${ID}/${p.discord_user.avatar}.png?size=256`
+    : null;
+  const start = act?.timestamps?.start;
+  const end = act?.timestamps?.end;
+  const pct = start && end ? Math.min(100, ((now - start) / (end - start)) * 100) : null;
+  const verb = act ? ["Playing", "Streaming", "Listening to", "Watching", "", "Competing in"][act.type] : "";
 
   return (
-    <div
-      className={cn(
-        "mt-2 flex flex-col gap-2 w-full sm:min-w-[30rem] sm:max-w-[30rem]",
-        className
-      )}
-    >
-      {userId.length > 0 && isSnowflake(userId) ? (
-        <img
-          src={url}
-          height={280}
-          width={500}
-          alt="Your Lanyard Banner"
-          className="mx-auto"
-        />
-      ) : (
-        <div className="w-full min-h-64 rounded-xl border border-white/10 bg-gray-50/5 flex items-center justify-center text-white/25 font-mono text-sm px-16 text-center">
-          Enter your Discord ID to preview your Lanyard Banner
+    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-md flex flex-col items-center gap-8">
+        <div className="relative">
+          {avatar ? (
+            <img src={avatar} alt="" className="w-28 h-28 rounded-full border border-white/10" />
+          ) : (
+            <div className="w-28 h-28 rounded-full bg-white/5" />
+          )}
+          <span
+            className="absolute bottom-1 right-1 w-5 h-5 rounded-full border-4 border-black"
+            style={{ background: STATUS[p?.discord_status ?? "offline"] }}
+            title={p?.discord_status ?? "offline"}
+          />
         </div>
-      )}
 
-      <div className="mt-4 grid grid-cols-3 gap-1">
-        {(["markdown", "html", "url"] as const).map((type) => (
-          <button
-            key={type}
-            className={cn(
-              "rounded-md border border-zinc-800 px-1.5 py-1 font-mono text-sm font-medium uppercase tracking-wide text-white/50 transition-colors duration-100 ease-out cursor-pointer",
-              {
-                "border-white/30 bg-zinc-900 font-semibold text-white/75":
-                  outputType === type,
-                "hover:border-white/15 hover:bg-zinc-700/25":
-                  outputType !== type,
-              }
-            )}
-            onClick={() => setOutputType(type)}
-          >
-            {type}
-          </button>
-        ))}
+        <h1 className="font-unbounded text-5xl font-medium tracking-wide h-14">
+          {NAME.slice(0, typed)}
+          <span className="inline-block w-[3px] h-10 bg-white ml-1 align-[-4px] animate-pulse" />
+        </h1>
+
+        <p className="text-sm text-white/50 text-center -mt-4">
+          rust apps · homelab · roblox dev
+        </p>
+
+        <div className="w-full rounded-xl border border-white/10 bg-white/[0.03] p-4 min-h-[96px] flex items-center gap-4">
+          {act ? (
+            <>
+              {art(act) && <img src={art(act)!} alt="" className="w-16 h-16 rounded-lg object-cover" />}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-white/40 uppercase tracking-widest">
+                  {verb} {act.name}
+                </p>
+                <p className="truncate font-medium">{act.details ?? act.name}</p>
+                {act.state && <p className="truncate text-sm text-white/60">{act.state}</p>}
+                {pct !== null && start && end && (
+                  <div className="mt-2 flex items-center gap-2 text-[11px] text-white/40 font-mono">
+                    <span>{clock(now - start)}</span>
+                    <div className="flex-1 h-1 rounded bg-white/10">
+                      <div className="h-1 rounded bg-white" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span>{clock(end - start)}</span>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="w-full text-center text-sm text-white/40">building something</p>
+          )}
+        </div>
+
+        <nav className="flex flex-wrap justify-center gap-3">
+          {LINKS.map(([label, href, icon]) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label={label}
+              title={label}
+              className="w-11 h-11 rounded-lg border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            >
+              {icon === "namemc" ? (
+                <span className="font-unbounded text-xs">MC</span>
+              ) : (
+                <img src={`https://cdn.simpleicons.org/${icon}/ffffff`} alt="" className="w-5 h-5" />
+              )}
+            </a>
+          ))}
+        </nav>
       </div>
-
-      <div className="break-all rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-blue-400 my-2">
-        {copyContent[outputType]}
-      </div>
-
-      <button
-        className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-1 font-mono text-sm font-medium text-white/50 transition-colors duration-75 ease-out hover:bg-zinc-800/75 hover:text-white cursor-pointer"
-        onClick={() => {
-          navigator.clipboard.writeText(copyContent[outputType]);
-          setCopyState("Copied!");
-          setTimeout(() => setCopyState("Copy"), 1500);
-        }}
-      >
-        {copyState}
-      </button>
-    </div>
+    </main>
   );
-};
+}

@@ -11,6 +11,7 @@
 
   --font-sans: var(--font-open-sans);
   --font-mono: var(--font-roboto-mono);
+  --font-unbounded: var(--font-unbounded);
 }
 
 @media (prefers-color-scheme: dark) {
