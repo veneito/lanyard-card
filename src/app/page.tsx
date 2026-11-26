@@ -41,6 +41,8 @@ type Stats = {
   recent: { title: string; artist: string; time: number }[];
   days: { day: string; plays: number }[];
 };
+type Git = { total: number; streak: number; active: number; days: number[]; dates: string[] };
+type Code = { github: Git | null; gitlab: Git | null; stars: { github: number | null; gitlab: number | null } };
 
 const PROJECTS: [string, string, string, string][] = [
   ["Sonora", "Native music streaming client", "Rust · GPUI", "https://github.com/veneito/sonora"],
@@ -83,9 +85,47 @@ const Panel = ({ children, className = "" }: { children: React.ReactNode; classN
   <section className={`rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 ${className}`}>{children}</section>
 );
 
+type Repo = { label: string; name: string; href: string; stars: number | null };
+const Contribs = ({ title, href, g, repo }: { title: string; href: string; g: Git | null; repo: Repo }) => (
+  <Panel>
+    <a href={href} target="_blank" rel="noreferrer noopener" className="hover:text-white">
+      <Label>{title} · 6 months</Label>
+    </a>
+    <div className="grid grid-cols-3 gap-2 mb-4">
+      {[["Contribs", g?.total], ["Streak", g?.streak], ["Active", g?.active]].map(([k, v]) => (
+        <div key={k as string}>
+          <p className="font-unbounded text-lg">{fmt(v as number | undefined)}</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/35 mt-1">{k}</p>
+        </div>
+      ))}
+    </div>
+    <div className="grid grid-rows-7 grid-flow-col gap-[2px] w-max max-w-full">
+      {(g?.days ?? []).map((l, i) => (
+        <span
+          key={i}
+          title={g!.dates[i]}
+          className="w-[9px] h-[9px] rounded-[2px]"
+          style={{ background: `rgba(255,255,255,${[0.06, 0.25, 0.45, 0.7, 1][l]})` }}
+        />
+      ))}
+    </div>
+    <a
+      href={repo.href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="mt-4 flex items-baseline gap-3 text-sm min-w-0 group"
+    >
+      <span className="text-[10px] uppercase tracking-[0.2em] text-white/35 shrink-0">{repo.label}</span>
+      <span className="truncate font-medium group-hover:underline">{repo.name}</span>
+      <span className="text-white/40 font-mono text-xs shrink-0">★ {fmt(repo.stars)}</span>
+    </a>
+  </Panel>
+);
+
 export default function Home() {
   const [p, setP] = useState<Presence | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [git, setGit] = useState<Code | null>(null);
   const [typed, setTyped] = useState(0);
   const [deleting, setDeleting] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -103,6 +143,7 @@ export default function Home() {
         .catch(() => {});
     load();
     loadStats();
+    fetch("/github").then((r) => r.json() as Promise<Code>).then(setGit).catch(() => {});
     const poll = setInterval(load, 5000);
     const pollStats = setInterval(loadStats, 120000);
     const tick = setInterval(() => setNow(Date.now()), 1000);
@@ -136,7 +177,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen text-white px-5 py-16 sm:py-24">
       <XmbWave />
-      <div className="mx-auto w-full max-w-2xl flex flex-col gap-4 animate-[rise_.6s_ease-out]">
+      <div className="mx-auto w-full max-w-2xl lg:max-w-5xl flex flex-col gap-4 animate-[rise_.6s_ease-out]">
         {/* Header */}
         <header className="flex flex-col items-center text-center gap-5 mb-6">
           <div className="relative">
@@ -212,119 +253,134 @@ export default function Home() {
           </div>
         </Panel>
 
-        {/* Numbers */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[
-            ["All-time plays", fmt(stats?.total)],
-            ["This month", fmt(stats?.month)],
-            ["Top artist", stats?.artists[0]?.name ?? "—"],
-          ].map(([k, v]) => (
-            <Panel key={k} className={`!p-4 ${k === "Top artist" ? "col-span-2 sm:col-span-1" : ""}`}>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-white/35">{k}</p>
-              <p className="mt-1.5 font-unbounded text-lg sm:text-xl truncate" title={v}>{v}</p>
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
+          <div className="flex flex-col gap-4">
+            {/* Contributions */}
+            <div className="flex flex-col gap-4">
+              <Contribs title="GitHub" href="https://github.com/veneito" g={git?.github ?? null}
+                repo={{ label: "Contributed to", name: "sonora", href: "https://github.com/sonorahq/sonora/graphs/contributors", stars: git?.stars?.github ?? null }} />
+              <Contribs title="GitLab" href="https://gitlab.com/engage-pc-recomp/engage-pc-recomp" g={git?.gitlab ?? null}
+                repo={{ label: "Top repo", name: "engage-pc-recomp", href: "https://gitlab.com/engage-pc-recomp/engage-pc-recomp", stars: git?.stars?.gitlab ?? null }} />
+            </div>
+
+            {/* Projects */}
+            <Panel>
+              <Label>Projects</Label>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                {PROJECTS.map(([name, desc, tag, href]) => (
+                  <a
+                    key={name}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="group rounded-xl border border-white/[0.06] px-4 py-3 hover:bg-white/[0.04] hover:border-white/15 transition"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">{name}</span>
+                      <span className="text-[10px] uppercase tracking-widest text-white/35 shrink-0">{tag}</span>
+                    </div>
+                    <p className="text-xs text-white/45 mt-0.5 truncate">{desc}</p>
+                  </a>
+                ))}
+              </div>
             </Panel>
-          ))}
-        </div>
 
-        {/* Last 30 days */}
-        {stats && stats.days.length > 0 && (
-          <Panel>
-            <div className="flex items-baseline justify-between">
-              <Label>Listening · last 30 days</Label>
-              <span className="text-[11px] font-mono text-white/35 -mt-3">
-                {fmt(stats.days.reduce((n, d) => n + d.plays, 0))} plays
-              </span>
-            </div>
-            <div className="flex items-end gap-[3px] h-24">
-              {stats.days.map((d) => (
-                <div key={d.day} className="group relative flex-1 h-full flex items-end">
-                  <div
-                    className="w-full rounded-sm bg-white/25 group-hover:bg-white transition-colors"
-                    // sqrt scale: one huge day (e.g. an import) shouldn't flatten the rest
-                    style={{ height: `${Math.max(3, Math.sqrt(d.plays / Math.max(...stats.days.map((x) => x.plays), 1)) * 100)}%` }}
-                  />
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-md bg-white px-2 py-1 text-[11px] text-black opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    {d.day} · {d.plays}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        )}
-
-        {/* Charts */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Panel>
-            <Label>Top artists · this month</Label>
-            <ol className="flex flex-col gap-2.5">
-              {(stats?.artists ?? []).map((a, i) => (
-                <li key={a.name} className="text-sm">
-                  <div className="flex justify-between gap-3">
-                    <span className="truncate"><span className="text-white/30 font-mono mr-2">{i + 1}</span>{a.name}</span>
-                    <span className="text-white/40 font-mono">{a.plays}</span>
-                  </div>
-                  <div className="mt-1 h-[2px] rounded-full bg-white/[0.06]">
-                    <div className="h-full rounded-full bg-white/60" style={{ width: `${(a.plays / topPlays) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Panel>
-          <Panel>
-            <Label>Top tracks · this month</Label>
-            <ol className="flex flex-col gap-2">
-              {(stats?.tracks ?? []).map((t, i) => (
-                <li key={t.title + t.artist} className="flex items-baseline gap-2 text-sm min-w-0">
-                  <span className="text-white/30 font-mono">{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate">
-                    {t.title} <span className="text-white/40">· {t.artist}</span>
-                  </span>
-                  <span className="text-white/40 font-mono">{t.plays}</span>
-                </li>
-              ))}
-            </ol>
-          </Panel>
-        </div>
-
-        {/* Recent */}
-        <Panel>
-          <Label>Recently played</Label>
-          <ul className="divide-y divide-white/[0.05]">
-            {(stats?.recent ?? []).map((s) => (
-              <li key={s.time} className="flex items-baseline gap-3 py-2 text-sm min-w-0">
-                <span className="min-w-0 flex-1 truncate">
-                  {s.title} <span className="text-white/40">· {s.artist}</span>
-                </span>
-                <span className="text-white/30 font-mono text-xs">{ago(s.time, now)}</span>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-
-        {/* Projects */}
-        <Panel>
-          <Label>Projects</Label>
-          <div className="grid sm:grid-cols-2 gap-2">
-            {PROJECTS.map(([name, desc, tag, href]) => (
-              <a
-                key={name}
-                href={href}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="group rounded-xl border border-white/[0.06] px-4 py-3 hover:bg-white/[0.04] hover:border-white/15 transition"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium truncate">{name}</span>
-                  <span className="text-[10px] uppercase tracking-widest text-white/35 shrink-0">{tag}</span>
-                </div>
-                <p className="text-xs text-white/45 mt-0.5 truncate">{desc}</p>
-              </a>
-            ))}
           </div>
-        </Panel>
+          <div className="flex flex-col gap-4">
+            {/* Numbers */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {[
+                ["All-time plays", fmt(stats?.total)],
+                ["This month", fmt(stats?.month)],
+                ["Top artist", stats?.artists[0]?.name ?? "—"],
+              ].map(([k, v]) => (
+                <Panel key={k} className={`!p-4 ${k === "Top artist" ? "col-span-2 sm:col-span-1" : ""}`}>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/35">{k}</p>
+                  <p className="mt-1.5 font-unbounded text-lg sm:text-xl truncate" title={v}>{v}</p>
+                </Panel>
+              ))}
+            </div>
+
+            {/* Last 30 days */}
+            {stats && stats.days.length > 0 && (
+              <Panel>
+                <div className="flex items-baseline justify-between">
+                  <Label>Listening · last 30 days</Label>
+                  <span className="text-[11px] font-mono text-white/35 -mt-3">
+                    {fmt(stats.days.reduce((n, d) => n + d.plays, 0))} plays
+                  </span>
+                </div>
+                <div className="flex items-end gap-[3px] h-24">
+                  {stats.days.map((d) => (
+                    <div key={d.day} className="group relative flex-1 h-full flex items-end">
+                      <div
+                        className="w-full rounded-sm bg-white/25 group-hover:bg-white transition-colors"
+                        // sqrt scale: one huge day (e.g. an import) shouldn't flatten the rest
+                        style={{ height: `${Math.max(3, Math.sqrt(d.plays / Math.max(...stats.days.map((x) => x.plays), 1)) * 100)}%` }}
+                      />
+                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-md bg-white px-2 py-1 text-[11px] text-black opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        {d.day} · {d.plays}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+            )}
+
+            {/* Charts */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Panel>
+                <Label>Top artists · this month</Label>
+                <ol className="flex flex-col gap-2.5">
+                  {(stats?.artists ?? []).map((a, i) => (
+                    <li key={a.name} className="text-sm">
+                      <div className="flex justify-between gap-3">
+                        <span className="truncate"><span className="text-white/30 font-mono mr-2">{i + 1}</span>{a.name}</span>
+                        <span className="text-white/40 font-mono">{a.plays}</span>
+                      </div>
+                      <div className="mt-1 h-[2px] rounded-full bg-white/[0.06]">
+                        <div className="h-full rounded-full bg-white/60" style={{ width: `${(a.plays / topPlays) * 100}%` }} />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </Panel>
+              <Panel>
+                <Label>Top tracks · this month</Label>
+                <ol className="flex flex-col gap-2">
+                  {(stats?.tracks ?? []).map((t, i) => (
+                    <li key={t.title + t.artist} className="flex items-baseline gap-2 text-sm min-w-0">
+                      <span className="text-white/30 font-mono">{i + 1}</span>
+                      <span className="min-w-0 flex-1 truncate">
+                        {t.title} <span className="text-white/40">· {t.artist}</span>
+                      </span>
+                      <span className="text-white/40 font-mono">{t.plays}</span>
+                    </li>
+                  ))}
+                </ol>
+              </Panel>
+            </div>
+
+            {/* Recent */}
+            <Panel>
+              <Label>Recently played</Label>
+              <ul className="divide-y divide-white/[0.05]">
+                {(stats?.recent ?? []).map((s) => (
+                  <li key={s.time} className="flex items-baseline gap-3 py-2 text-sm min-w-0">
+                    <span className="min-w-0 flex-1 truncate">
+                      {s.title} <span className="text-white/40">· {s.artist}</span>
+                    </span>
+                    <span className="text-white/30 font-mono text-xs">{ago(s.time, now)}</span>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+
+          </div>
+        </div>
 
         <footer className="text-center text-[11px] text-white/25 mt-4">
-          presence via lanyard · scrobbles via maloja
+          presence via lanyard · scrobbles via maloja · commits via github & gitlab
         </footer>
       </div>
     </main>
