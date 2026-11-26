@@ -211,13 +211,13 @@ export default function Home() {
         </Panel>
 
         {/* Numbers */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
             ["All-time plays", fmt(stats?.total)],
             ["This month", fmt(stats?.month)],
             ["Top artist", stats?.artists[0]?.name ?? "—"],
           ].map(([k, v]) => (
-            <Panel key={k} className="!p-4">
+            <Panel key={k} className={`!p-4 ${k === "Top artist" ? "col-span-2 sm:col-span-1" : ""}`}>
               <p className="text-[11px] uppercase tracking-[0.2em] text-white/35">{k}</p>
               <p className="mt-1.5 font-unbounded text-lg sm:text-xl truncate" title={v}>{v}</p>
             </Panel>
