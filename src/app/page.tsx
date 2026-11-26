@@ -54,7 +54,7 @@ export default function Home() {
   useEffect(() => {
     const load = () =>
       fetch(`https://api.lanyard.rest/v1/users/${ID}`)
-        .then((r) => r.json())
+        .then((r) => r.json() as Promise<{ success: boolean; data: Presence }>)
         .then((j) => j.success && setP(j.data))
         .catch(() => {});
     load();
