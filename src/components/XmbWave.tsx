@@ -31,7 +31,8 @@ export default function XmbWave() {
         ctx.beginPath();
         for (let x = 0; x <= w; x += 6) {
           const y = h * 0.66 + k * s * 0.6 + 24 * s * 0.6 * Math.sin(x / (72 * s) + k / 10 + phase * (1 + k / 40));
-          x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          if (x) ctx.lineTo(x, y);
+          else ctx.moveTo(x, y);
         }
       };
       for (const [k, a] of WAVES) {
