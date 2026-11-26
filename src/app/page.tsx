@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Globe } from "lucide-react";
 
 const ID = "968673369077727262";
 const NAME = "veneito";
 
 const LINKS: [string, string, string][] = [
   ["GitHub", "https://github.com/veneito", "github"],
-  ["Website", "https://www.veneito.dev", "googlechrome"],
+  ["Website", "https://www.veneito.dev", "globe"],
   ["Discord", "https://discord.com/invite/wZph7vyTRH", "discord"],
   ["Steam", "https://steamcommunity.com/id/veneito", "steam"],
   ["Twitch", "https://twitch.tv/veneitoo", "twitch"],
@@ -63,11 +64,19 @@ export default function Home() {
     return () => (clearInterval(poll), clearInterval(tick));
   }, []);
 
+  // Type out, hold, delete, pause, repeat (same timing as the Discord banner GIF).
+  const [deleting, setDeleting] = useState(false);
   useEffect(() => {
-    if (typed >= NAME.length) return;
-    const t = setTimeout(() => setTyped(typed + 1), 160);
+    let delay = deleting ? 70 : 160;
+    if (!deleting && typed === NAME.length) delay = 4000;
+    if (deleting && typed === 0) delay = 1200;
+    const t = setTimeout(() => {
+      if (!deleting && typed === NAME.length) setDeleting(true);
+      else if (deleting && typed === 0) setDeleting(false);
+      else setTyped(typed + (deleting ? -1 : 1));
+    }, delay);
     return () => clearTimeout(t);
-  }, [typed]);
+  }, [typed, deleting]);
 
   const act = p?.activities.find((a) => a.type !== 4);
   const avatar = p?.discord_user.avatar
@@ -140,8 +149,8 @@ export default function Home() {
               title={label}
               className="w-11 h-11 rounded-lg border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
             >
-              {icon === "namemc" ? (
-                <span className="font-unbounded text-xs">MC</span>
+              {icon === "globe" ? (
+                <Globe size={20} strokeWidth={1.75} />
               ) : (
                 <img src={`https://cdn.simpleicons.org/${icon}/ffffff`} alt="" className="w-5 h-5" />
               )}
