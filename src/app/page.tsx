@@ -238,7 +238,8 @@ export default function Home() {
                 <div key={d.day} className="group relative flex-1 h-full flex items-end">
                   <div
                     className="w-full rounded-sm bg-white/25 group-hover:bg-white transition-colors"
-                    style={{ height: `${Math.max(3, (d.plays / Math.max(...stats.days.map((x) => x.plays), 1)) * 100)}%` }}
+                    // sqrt scale: one huge day (e.g. an import) shouldn't flatten the rest
+                    style={{ height: `${Math.max(3, Math.sqrt(d.plays / Math.max(...stats.days.map((x) => x.plays), 1)) * 100)}%` }}
                   />
                   <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-md bg-white px-2 py-1 text-[11px] text-black opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     {d.day} · {d.plays}
