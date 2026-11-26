@@ -1,11 +1,8 @@
 import type { NextConfig } from "next";
 
+// Self-hosted in Docker (standalone server) instead of Cloudflare Workers.
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: "standalone",
 };
 
 export default nextConfig;
-
-// added by create cloudflare to enable calling `getCloudflareContext()` in `next dev`
-import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
-initOpenNextCloudflareForDev();

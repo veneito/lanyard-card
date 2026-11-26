@@ -25,6 +25,14 @@ export async function GET(
       }
     );
 
+  // Self-hosted: only serve the IDs listed in ALLOWED_IDS (comma-separated).
+  const allowed = (process.env.ALLOWED_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (!allowed.includes(userId))
+    return Response.json(
+      { data: { error: "This card server only serves its owner." }, success: false },
+      { status: 403 }
+    );
+
   if (!isSnowflake(userId))
     return Response.json(
       {

@@ -1,0 +1,10 @@
+services:
+  lanyard-card:
+    build: .
+    container_name: lanyard-card
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3020:3000"
+    environment:
+      ALLOWED_IDS: "968673369077727262"
+    mem_limit: 256m
